@@ -1,9 +1,9 @@
 # Bounded Optimization by Quadratic Optimization
 
-Copyright (c) 2009, Mike Powell (FORTRAN version).
+based on the C version by Éric Thiébaut, 2015-2017
+https://github.com/emmt/Algorithms.git
 
-Copyright (c) 2015, Éric Thiébaut (C version).
-from https://github.com/emmt/Algorithms.git
+based on the FORTRAN version by Mike Powell, 2009
 
 This provides a C implementation of Mike Powell's BOBYQA algorithm for
 minimizing a function of many variables.  The method is *derivatives free*
@@ -35,9 +35,11 @@ improvements over the FORTRAN version:
 * a return code indicates the success of the method or the reason of the
   failure.
 
-Daniel Pitzl, 2018
+## this version
 
-The simple Makefile uses the g++ compiler.
+by Daniel Pitzl, DESY, 2018
+
+The simple Makefile uses the g++ compiler.  
 (no extern "C" {} in bobyqa.h)
 
 ## make
@@ -55,8 +57,8 @@ used in the code (see [`bobyqa.h`](./bobyqa.h) for details).
 
 ## usage
 
-include "bobyqa.h" in your project
-add -L/your-path-to-bobyqa -lbobyqa to your Makefile
+include "bobyqa.h" in your project  
+add -L/your-path-to-bobyqa -lbobyqa to your Makefile  
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/your-path-to-bobyqa
 
 ## example
@@ -66,7 +68,7 @@ of a random-generated histogram to a Student's t distribution.
 
 It uses ROOT from CERN for histogramming and visualization.
 
-cd test
-edit the Makefile: path to your ROOT installation
-make
+cd test  
+edit the Makefile: path to your ROOT installation  
+make  
 ./student
