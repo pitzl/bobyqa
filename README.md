@@ -64,10 +64,12 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/your-path-to-bobyqa
 
 ## example
 
-The test directory constains an example of least-squares fitting of a
-random-generated histogram to a Student's t distribution.
-It uses ROOT from CERN for histogramming and visualization
+The test directory contains an example of least-squares fitting
+of a random-generated histogram to a Student's t distribution.
+
+It uses ROOT from CERN for histogramming and visualization.
+
 cd test
-edit the Makefile to set the path to your ROOT installation
+edit the Makefile: path to your ROOT installation
 make
-student
+./student

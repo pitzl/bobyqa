@@ -1,3 +1,3 @@
 
-lib: bobyqa.cc bobyqa.h
-	g++ -O2 -Wall bobyqa.cc -fPIC -shared -o libbobyqa.so
+lib: bobyqa.cc bobyqa.h Makefile
+	g++ -O2 -Wall -Wextra bobyqa.cc -shared -fPIC -o libbobyqa.so
