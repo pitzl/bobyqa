@@ -1,7 +1,8 @@
-# C version of BOBYQA
+# Bounded Optimization by Quadratic Optimization
 
-Éric Thiébaut 2015-2017 
+Copyright (c) 2009, Mike Powell (FORTRAN version).
 
+Copyright (c) 2015, Éric Thiébaut (C version).
 from https://github.com/emmt/Algorithms.git
 
 This provides a C implementation of Mike Powell's BOBYQA algorithm for
@@ -16,10 +17,6 @@ the variables.  The algorithm is described in:
 The present code is based on the original FORTRAN version written by Mike
 Powell who kindly provides his code on demand (at mjdp@cam.ac.uk) and has
 been converted to C by É. Thiébaut.
-
-Copyright (c) 2009, Mike Powell (FORTRAN version).
-
-Copyright (c) 2015, Éric Thiébaut (C version).
 
 BOBYQA builds a quadratic model of the objective function from much less than
 `(N+1)(N+2)/2` values of the function (with `N` the number of variables).  The
