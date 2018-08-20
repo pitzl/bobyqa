@@ -73,5 +73,5 @@ edit the Makefile: path to your ROOT installation
 make  
 ./student
 
-![initial values](test/initial.png)  
-![fitted values](test/final.png)  
+[initial values](test/initial.png)  
+[fitted values](test/final.png)  
