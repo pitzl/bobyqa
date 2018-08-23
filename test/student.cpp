@@ -4,6 +4,7 @@
 
 #include <random>
 #include <iostream> // for cout
+#include <iomanip> // setw
 #include <time.h> // gettimeofday
 
 #include <TStyle.h>
@@ -14,6 +15,9 @@
 #include <TH1I.h> // ROOT
 #include <TFile.h> // ROOT
 #include <TMath.h> // ROOT
+#include "TMatrixD.h"
+#include "TDecompSVD.h"
+#include "TVector.h"
 
 #include "/home/pitzl/ROOT/bobyqa/bobyqa.h"
 
@@ -59,7 +63,7 @@ struct Data {
 };
 
 //----------------------------------------------------------------------------
-REAL chisq( const INTEGER m, const REAL* par, void * data ) // bobyqa_objfun
+REAL ChiSq( const INTEGER m, const REAL* par, void * data ) // bobyqa_objfun
 {
   cout << "par";
   for( int i = 0; i < m; ++i )
@@ -73,10 +77,15 @@ REAL chisq( const INTEGER m, const REAL* par, void * data ) // bobyqa_objfun
   parf[1] = par[1]; // sigma
   parf[2] = par[2]; // nu
 
+  // user parameters are signal and BG fractions
+  // integrate over one bin:
+
   double dx = d->x[1] - d->x[0]; // bin width
+
   parf[3] = par[3]*dx; // bin area
 
   double xrange = d->x[d->n-1] - d->x[0] + dx;
+
   parf[4] = par[4]*dx/xrange; // normed BG
 
   double c2 = 0;
@@ -225,7 +234,7 @@ int main()
   par[3] = 1-n*bg/A; // signal fraction
   par[4] = n*bg/A; // BG fraction
 
-  cout << "starting at " << chisq( npar, par, &data )
+  cout << "starting at " << ChiSq( npar, par, &data )
        << " / " << n-npar << endl;
 
   // plot:
@@ -279,13 +288,13 @@ int main()
   int nw = (npt+5)*(npt+npar) + 3*npar*(npar+5)/2;
   REAL work[nw];
 
-  int good = bobyqa( npar, npt, chisq, (void*)&data, par, parl, parh,
+  int good = bobyqa( npar, npt, ChiSq, (void*)&data, par, parl, parh,
 		     rhobeg, rhoend,
 		     iprint, maxfun, work );
   cout << "BOBYQA " << good << endl;
   cout << "final chisq " << work[0] << " / " << n-npar << endl;
 
-  chisq( npar, par, &data );
+  double chisq0 = ChiSq( npar, par, &data );
 
   parf[0] = par[0]; // xm
   parf[1] = par[1]; // s
@@ -307,10 +316,178 @@ int main()
   cout << "enter any key" << endl;
   cin >> any;
 
+  // scan FCN around minimum:
+  // chisq = chisq0 + ( (p-p0)/s )^2
+  // => dchi = (dp/s)^2
+  // first iter: dchi1 for dp1
+  // we want dchi2 = 1
+  // sqrt(dchi2/dchi1) = dp2/dp1
+  // => dp2 = dp1 / sqrt(dchi1)
+
+  double xar[npar];
+  for( int j = 0; j < npar; ++j )
+    xar[j] = par[j];
+
+  double dp1[npar];
+
+  bool ldb = 0; // debug flag
+
+  for( int j = 0; j < npar; ++j ) {
+
+    double dp = 0.1*par[j]; // initial step
+    int iter = 0;
+    bool again = 1;
+    double dchi = 0;
+
+    do {
+      iter++;
+      xar[j] = par[j] + dp;
+      double chisq = ChiSq( npar, xar, &data );
+      dchi = chisq - chisq0;
+      if( ldb )
+	cout << "   par " << j << " iter " << iter << "  " << xar[j]
+	     << " dchi2 " << dchi << endl;
+
+      if( dchi > 2 )
+	dp = dp/sqrt(dchi);
+      else if( dchi < 0.01 )
+	dp = 2*dp;
+      else if( dchi < 0.5 )
+	dp = dp/sqrt(dchi);
+      else
+	again = 0;
+      if( iter > 9 ) again = 0;
+    }
+    while( again );
+
+    cout << "par " << j
+	 << "  " << par[j]
+	 << ", iter " << iter
+	 << ", step " << dp
+	 << ", dchi " << dchi
+	 << endl;
+
+    xar[j] = par[j]; // back to minimum
+    dp1[j] = dp;
+
+  } // j par
+
+  // Hessian for 2nd order derivatives:
+  // f''(x) = ( f(x + h) − 2f(x) + f(x − h) ) / h^2
+  // d2f/dxdy =
+  // ( f(a+h1, b+h2) - f(a+h1, b-h2) - f(a-h1, b+h2) + f(a-h1, b-h2) / (4 h1 h2)
+
+  double H[npar][npar];
+
+  for( int j = 0; j < npar; ++j ) {
+
+    double dpj = dp1[j];
+    xar[j] = par[j] + dpj;
+    double chisq = ChiSq( npar, xar, &data );
+
+    double dchiup = chisq - chisq0;
+    xar[j] = par[j] - dpj;
+    chisq = ChiSq( npar, xar, &data );
+
+    double dchidn = chisq - chisq0;
+    double f2nd = ( dchiup + dchidn ) / (dpj*dpj);
+    H[j][j] = f2nd;
+
+    for( int k = j+1; k < npar; ++k ){
+
+      double dpk = dp1[k];
+
+      xar[j] = par[j] + dpj;
+      xar[k] = par[k] + dpk;
+      double lupup = ChiSq( npar, xar, &data );
+
+      xar[k] = par[k] - dpk;
+      double lupdn = ChiSq( npar, xar, &data );
+
+      xar[j] = par[j] - dpj;
+      double ldndn = ChiSq( npar, xar, &data );
+
+      xar[k] = par[k] + dpk;
+      double ldnup = ChiSq( npar, xar, &data );
+
+      double df2didj = ( lupup - lupdn - ldnup + ldndn ) / ( 4*dpj*dpk);
+      H[j][k] = df2didj;
+      H[k][j] = df2didj;
+
+      xar[k] = par[k]; // back to minimum
+
+    } // k
+
+    xar[j] = par[j]; // back to minimum
+
+  } // j
+
+  cout << endl;
+
+  // invert H
+
+  TMatrixD hesse( npar, npar );
+
+  for( int j = 0; j < npar; ++j )
+    for( int k = 0; k < npar; ++k )
+      TMatrixDRow( hesse, j )(k) = 0.5*H[j][k]; // justify factor 1/2
+
+  TDecompSVD svd( npar, npar );
+  svd.SetMatrix( hesse );
+  svd.Decompose();
+
+  TVectorD eigen = svd.GetSig();
+  cout << "Hesse Eigenvalues";
+  for( int j = 0; j < npar; ++j )
+    cout << "  " << eigen(j);
+  cout << endl;
+  cout << "Hesse condition number  " << svd.Condition() << endl;
+
+  Double_t d1, d2;
+  svd.Det( d1, d2 );
+  cout << "Hesse Det  " << d1 * pow( 2, d2 ) << endl;
+
+  TMatrixD covar( npar, npar );
+  covar = svd.Invert();
+  //covar = hesse.Invert();
+
+  cout << endl;
+
+  double sigma[npar];
+  for( int j = 0; j < npar; ++j ) {
+    sigma[j] = sqrt( fabs( TMatrixDRow( covar, j )(j) ) );
+    cout << "par " << j
+	 << ":  " << par[j]
+	 << " +- " << sigma[j] // agress with Minuit
+	 << endl;
+  }
+
+  // print correlations:
+
+  cout << endl;
+
+  for( int k = 0; k < npar; ++k )
+    cout << setw(14) << k;
+  cout << endl;
+
+  for( int j = 0; j < npar; ++j ) {
+    cout << setw(9) << j << "  ";
+    cout << setw(j*14) << "";
+    for( int k = j; k < npar; ++k ) {
+      int iw = 14;
+      if( k == j ) iw = 3;
+      cout << setw(iw)
+	   << TMatrixDRow( covar, j )(k) / sigma[j] / sigma[k];
+    }
+    cout << endl;
+  }
+
+  cout << endl;
+
   rootFile.Write();
   rootFile.Close();
-  cout << "rlq " << rootFile.GetName() << endl;
-  cout << ".x fittp0.C+(\"hd\")" << endl;
+  cout << rootFile.GetName() << endl;
+
   return 0;
 
 } // main

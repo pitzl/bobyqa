@@ -6,4 +6,4 @@ student: student.cpp Makefile
 	g++ -O2 -Wall $(ROOTCFLAGS) student.cpp  -o student \
 	$(ROOTLIBS) -L.. -lbobyqa
 	@echo 'done: student'
-	@echo 'export LD_LIBRARY_PATH=sLD_LIBRARY_PATH:/your-path-to-bobyqa'
+	@echo 'export LD_LIBRARY_PATH=sLD_LIBRARY_PATH:..'
