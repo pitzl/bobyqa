@@ -75,3 +75,26 @@ make
 
 initial: ![initial values](test/initial.png)  
 fitted: ![fitted values](test/final.png)  
+
+```
+Hesse Eigenvalues  3.70176e+06  1.30337e+06  571758  441020  744.702
+Hesse condition number  4970.8
+Hesse Det  9.06005e+26
+
+parameters: fitted values and uncertainties
+
+par 0:  0.000619711 +- 0.00132251
+par 1:  0.999723 +- 0.00159345
+par 2:  3.03673 +- 0.0366171
+par 3:  0.800951 +- 0.00132169
+par 4:  0.202071 +- 0.00101357
+
+parameter correlation matrix:
+
+ 0             1             2             3             4
+ 0    1    0.00346015    0.00287422     -0.001493    0.00159949
+ 1                  1       0.47594     -0.113242     0.0969192
+ 2                                1     -0.688977      0.766164
+ 3                                              1     -0.727242
+ 4                                                            1
+```
