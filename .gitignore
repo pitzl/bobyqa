@@ -2,3 +2,5 @@
 libbobyqa.so
 *.root
 student
+rosenb
+ellipse

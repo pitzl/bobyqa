@@ -7,3 +7,9 @@ student: student.cpp Makefile
 	$(ROOTLIBS) -L.. -lbobyqa
 	@echo 'done: student'
 	@echo 'export LD_LIBRARY_PATH=sLD_LIBRARY_PATH:..'
+
+rosenb: rosenb.cpp Makefile
+	g++ -O2 -Wall $(ROOTCFLAGS) rosenb.cpp  -o rosenb \
+	$(ROOTLIBS) -L.. -lbobyqa
+	@echo 'done: rosenb'
+	@echo 'export LD_LIBRARY_PATH=sLD_LIBRARY_PATH:..'
